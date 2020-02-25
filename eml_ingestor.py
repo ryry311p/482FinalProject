@@ -1,14 +1,34 @@
 import os
 import random
+import re
 from email import parser
 
 def main():
    msgs = get_msgs_as_strings()
-   print(msgs)
+   #clean_msgs(msgs)
+
+   # print example email body
+   random.shuffle(msgs)
+   print(msgs[0])
+
+def clean_msgs(msgs):
+   # there's probably a better way to remove these, but I haven't found it
+   bad_line_prefixes = ['Received:', 'Return-Path:', 'Message-ID:', 'Content-Transfer-Encoding:', 'X-IronPort-Anti-Spam-Filtered:', 'X-IronPort-Anti-Spam-Result:', 'X-IronPort-AV:', 'X-Originating-IP-Address:', 'To:', 'Subject:', 'From:', 'Date:', 'Content-Type:', 'MIME-Version:']
+
+   for i in range(len(msgs)):
+      new_msg = msgs[i]
+      #while ('<' in new_msg and '>' in new_msg):
+      #   new_msg = re.sub(r'\<.*\>', '', new_msg)
+      new_msg = new_msg.split('\n')
+      for line in new_msg:
+         for pref in bad_line_prefixes:
+            if pref in line:
+               if line in new_msg:
+                  new_msg.remove(line)
+      msgs[i] = '\n'.join(new_msg)
 
 def get_msgs_as_strings():
    msgs = []
-   fails = 0
    for filename in os.listdir('conf_emails'):
       if filename.endswith(".eml"):
          try:
@@ -24,8 +44,7 @@ def get_msgs_as_strings():
                msgs.append(as_string)
          except UnicodeDecodeError:
             # for some reason "conf_emails/[GAMESNETWORK] CFP + 3rd keynote_ DiGRA 2020 - Frans Mäyrä (TAU) <frans.mayra@TUNI.FI> - 2019-10-31 0239.eml" is unreadable
-            fails += 1
-   random.shuffle(msgs)
+            pass
    return msgs
 
 if __name__ == '__main__':
