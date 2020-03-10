@@ -2,14 +2,20 @@ import os
 import random
 import re
 from email import parser
+import nltk
 
 def main():
    msgs = get_msgs_as_strings()
    clean_msgs(msgs)
 
    # print example email body
-   random.shuffle(msgs)
-   print(msgs[0])
+   # random.shuffle(msgs)
+   first = msgs[0]
+   first_lines = first.split('\n')
+   for line in first_lines:
+      tokens = nltk.word_tokenize(line)
+      tags = nltk.pos_tag(tokens)
+      print(tags)
 
 def clean_msgs(msgs):
    # there's probably a better way to remove these, but I haven't found it
