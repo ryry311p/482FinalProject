@@ -7,22 +7,25 @@ function Event() {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: text => <a>{text}</a>,
+      sorter: (a, b) => a.name.charCodeAt(0) - b.name.charCodeAt(0),
     },
     {
       title: 'Theme',
       dataIndex: 'theme',
       key: 'theme',
+      sorter: (a, b) => a.theme.charCodeAt(0) - b.theme.charCodeAt(0),
     },
     {
       title: 'Location',
       dataIndex: 'location',
       key: 'location',
+      sorter: (a, b) => a.location.charCodeAt(0) - b.location.charCodeAt(0),
     },
     {
       title: 'Submission Date',
       dataIndex: 'submissionDate',
       key: 'submissionDate',
+      sorter: (a, b) => Date.parse(a.submissionDate) - Date.parse(b.submissionDate),
     },
     {
       title: 'Notification Date',
@@ -33,6 +36,7 @@ function Event() {
       title: 'Conference Date',
       dataIndex: 'conferenceDate',
       key: 'conferenceDate',
+      sorter: (a, b) => Date.parse(a.conferenceDate.split(' - ')[0]) - Date.parse(b.conferenceDate.split(' - ')[0]),
     },
   ];
 
