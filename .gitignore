@@ -1,3 +1,5 @@
 .idea/
 __pycache__/
-conf_emails/
+web/server/src/conf_emails/
+node_modules/
+conf_emails.zip
