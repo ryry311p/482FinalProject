@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table } from 'antd';
+import { Card, Table } from 'antd';
 
 function Event() {
   const columns = [
@@ -72,7 +72,9 @@ function Event() {
 
   return (
       <div>
-        <Table columns={columns} dataSource={data} />
+        <Card title="All Conferences">
+          <Table columns={columns} dataSource={data} />
+        </Card>
       </div>
   );
 }
