@@ -3,6 +3,7 @@ import random
 import re
 from nltk.tag import StanfordNERTagger
 from email import parser
+import nltk
 
 def main():
    msgs = get_msgs_as_strings()
@@ -12,8 +13,13 @@ def main():
    print(st.tag(msgs[0].split()))
 
    # print example email body
-   #random.shuffle(msgs)
-   #print(find_ners(msgs[0]))
+   # random.shuffle(msgs)
+   first = msgs[0]
+   first_lines = first.split('\n')
+   for line in first_lines:
+      tokens = nltk.word_tokenize(line)
+      tags = nltk.pos_tag(tokens)
+      print(tags)
 
 def clean_msgs(msgs):
    for i in range(len(msgs)):
