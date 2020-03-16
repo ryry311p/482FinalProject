@@ -1,4 +1,5 @@
 import json
+import time
 import random
 from eml_ingestor import get_msgs_as_strings, clean_msgs
 
@@ -31,7 +32,8 @@ while len(emails) < 20:
         if email['conference_date'] == 'next':
             continue
         emails.append(email)
-        with open('labeled_emails.json', 'w') as f:
+        cur_time = time.time()
+        with open('labeled_emails.json' + str(cur_time), 'w') as f:
             json.dump(emails, f)
         print('Gotcha bitch!')
     cur += 1
