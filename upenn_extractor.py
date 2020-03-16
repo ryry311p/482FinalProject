@@ -81,3 +81,24 @@ upenn_json_obj = json.dumps(upenn_json)
 with open("uppen_events.json", "w") as outfile: 
     outfile.write(upenn_json_obj)
 
+import spacy
+from spacy import displacy
+from collections import Counter
+import en_core_web_sm
+nlp = en_core_web_sm.load()
+
+print(upenn_json[1]['title'])
+print(upenn_json[1]['description'])
+
+sent = upenn_json[1]['description']
+tagged = nlp(sent)
+print([(X.text, X.label_) for X in tagged.ents])
+
+displacy.render(tagged, jupyter=True, style='ent')
+
+labels = [x.label_ for x in tagged.ents]
+Counter(labels)
+
+DateObjs = [X for X in tagged.ents if X.label_ == "DATE"]
+DateObjs
+

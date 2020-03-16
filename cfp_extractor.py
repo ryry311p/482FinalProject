@@ -98,7 +98,7 @@ def cfp_extract(entry_url): #entry url is "/CFP/26108", "/CFP/26129", etc.
 cfp_data = []
 cfp_json = []
 
-for x in range(1,20):
+for x in range(1,2):
     url = "https://www.cfplist.com/_CFPList?category=&page={}&query=&sortBy=CID#".format(x)
     print(url)
     response = requests.get(url)
@@ -118,7 +118,42 @@ for x in range(1,20):
 print(len(cfp_data))
 print(len(cfp_json))
 
+print(cfp_data[0])
+
+print(cfp_json[0]['title'])
+print(cfp_json[0]['submission_date'])
+
 cfp_json_obj = json.dumps(cfp_json)
 with open("cfp_events.json", "w") as outfile: 
     outfile.write(cfp_json_obj)
+
+"""# Named Entity Recognition"""
+
+import spacy
+from spacy import displacy
+from collections import Counter
+import en_core_web_sm
+nlp = en_core_web_sm.load()
+
+print(cfp_json[0]['title'])
+print(cfp_json[0]['location'])
+print(cfp_json[0]['organization'])
+print(cfp_json[0]['description'])
+
+print(cfp_data[0])
+
+event_blurb = cfp_data[0]
+
+tagged = nlp(event_blurb)
+print([(X.text, X.label_) for X in tagged.ents])
+
+displacy.render(tagged, jupyter=True, style='ent')
+
+labels = [x.label_ for x in tagged.ents]
+Counter(labels)
+
+DateObjs = [X for X in tagged.ents if X.label_ == "DATE"]
+DateObjs
+
+
 
