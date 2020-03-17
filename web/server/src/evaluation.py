@@ -123,7 +123,7 @@ for event in cfp_events:
       print("Prediction: {}\tLabel: {}".format(prediction, labels))
     for key in labels.keys():
       target = labels[key]
-      if key in prediction.keys() and target[0] == prediction[key][0] and target[1] == prediction[key][1]:
+      if key in prediction.keys() and target[0] == prediction[key][0]:
          num_correct_dates += 1
 
 
