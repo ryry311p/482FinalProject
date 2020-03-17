@@ -58,9 +58,80 @@ def extract_event_name(event_blurb):
             if(entity.text.lower() in test_title.lower()):
                 return test_title
 
-
-
     return 0
+
+def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates_precede_tags):
+   clean_date = clean_months(ent.text.replace('=', '').replace(':', ''))
+   if clean_date:
+      parsed_date = parse(clean_date)
+      dates[key] = parsed_date
+      if not dates_precede_tags and not tags_precede_dates:
+         if search_text.find(ent.text.lower()) > f(search_text):
+            tags_precede_dates = True
+         else:
+            dates_precede_tags = True
+   return tags_precede_dates, dates_precede_tags
+
+def extract_dates(blurb):
+   # higher search range means more hits, but higher likelihood of false positive
+   SEARCH_RANGE = 60
+   tagged = nlp(blurb)
+   dates = {}
+   index = 0
+   tags_precede_dates = False
+   dates_precede_tags = False
+   for ent in tagged.ents:
+      if ent.label_ == 'DATE' and '20' in ent.text and len(ent.text.split()) > 1:
+         last_index = index
+         index = blurb.find(ent.text, last_index)
+
+         if tags_precede_dates:
+            search_txt = blurb[index - SEARCH_RANGE:index].lower()
+         elif dates_precede_tags:
+            search_txt = blurb[index:index + len(ent.text) + SEARCH_RANGE].lower()
+         else:
+            search_txt = blurb[index - SEARCH_RANGE:index + len(ent.text) + SEARCH_RANGE].lower()
+
+         if 'submission' not in dates.keys() and is_submission(search_txt):
+            tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'submission', is_submission, search_txt, tags_precede_dates, dates_precede_tags)
+         elif 'notification' not in dates.keys() and is_notification(search_txt):
+            tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'notification', is_notification, search_txt, tags_precede_dates, dates_precede_tags)
+         elif 'conference' not in dates.keys() and is_conference(search_txt):
+            tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'conference', is_conference, search_txt, tags_precede_dates, dates_precede_tags)
+   return dates
+
+def is_submission(txt):
+   if txt.find('submi') != -1:
+      return txt.find('submi')
+   else:
+      return False
+
+def is_notification(txt):
+   if txt.find('notification') != -1:
+      return txt.find('notification')
+   else:
+      return False
+
+def is_conference(txt):
+   if txt.find('conference') != -1:
+      return txt.find('conference')
+   elif txt.find('symposium') != -1:
+      return txt.find('symposium')
+   else:
+      return False
+
+def clean_months(txt):
+   months = {'jan': 'January', 'feb': 'February', 'mar': 'March', 'apr': 'April', 'may': 'May', 'jun': 'June', 'jul': 'July', 'aug': 'August', 'sep': 'September', 'oct': 'October', 'nov': 'November', 'dec': 'December'}
+   words = txt.split()
+
+   contains_month = False
+   for i in range(len(words)):
+      for month in months.keys():
+         if month in words[i].lower():
+            contains_month = True
+            words[i] = months[month]
+   if contains_month:
+      return ' '.join(words)
 
 with open('labeled_emails.json') as f:
     emails = json.load(f)
