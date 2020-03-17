@@ -19,7 +19,15 @@ function Event() {
       title: 'Location',
       dataIndex: 'location',
       key: 'location',
-      sorter: (a, b) => a.location.charCodeAt(0) - b.location.charCodeAt(0),
+      sorter: (a, b) => {
+        if (!a.location) {
+          return 1;
+        }
+        if (!b.location) {
+          return -1;
+        }
+        return a.location.charCodeAt(0) - b.location.charCodeAt(0);
+      },
     },
     {
       title: 'Submission Date',
