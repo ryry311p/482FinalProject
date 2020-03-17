@@ -3,3 +3,5 @@ __pycache__/
 web/server/src/conf_emails/
 node_modules/
 conf_emails.zip
+.ipynb_checkpoints/
+conf_emails/
