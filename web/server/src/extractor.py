@@ -86,7 +86,8 @@ def extract_dates(blurb):
    tags_precede_dates = False
    dates_precede_tags = False
    for ent in tagged.ents:
-      if (ent.label_ == 'DATE' or ent.label_ == 'CARDINAL') and '20' in ent.text and len(ent.text.split()) > 1:
+      if (ent.label_ == 'DATE' or ent.label_ == 'CARDINAL') and '20' in ent.text: # and len(ent.text.split()) > 1:
+         print(ent.text)
          last_index = index
          index = blurb.find(ent.text, last_index)
 
@@ -132,7 +133,10 @@ def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates
       try:
         parsed_date = parse(clean_date)
       except:
-          return tags_precede_dates, dates_precede_tags
+         try:
+            parsed_date = (datetime.datetime(*(time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'))[:3]), None)
+         except:
+            return tags_precede_dates, dates_precede_tags
       dates[key] = parsed_date
       if not dates_precede_tags and not tags_precede_dates:
          if search_text.find(ent.text.lower()) > f(search_text):
@@ -240,8 +244,11 @@ def persist_event(extracted_event_document):
 
 def concat_cfp_event(cfp_event):
     output = ""
-    for text in cfp_event.values():
-        output += text + '\n'
+    for key in cfp_event.values():
+       if key in ['submission_date', 'conference_date', 'notification_date']:
+          output += key + ' ' + cfp_event[key] + '\n'
+       else:
+          output += text + '\n'
     return output
 
 
