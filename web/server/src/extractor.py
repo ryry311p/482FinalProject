@@ -6,6 +6,8 @@ from mongoengine import connect, DoesNotExist
 from daterangeparser import parse
 from eml_ingestor import get_emails
 from event_model import EventDocument
+import datetime
+import time
 nlp = en_core_web_sm.load()
 
 
@@ -87,7 +89,6 @@ def extract_dates(blurb):
    dates_precede_tags = False
    for ent in tagged.ents:
       if (ent.label_ == 'DATE' or ent.label_ == 'CARDINAL') and '20' in ent.text: # and len(ent.text.split()) > 1:
-         print(ent.text)
          last_index = index
          index = blurb.find(ent.text, last_index)
 
@@ -100,9 +101,9 @@ def extract_dates(blurb):
 
          if 'submission' not in dates.keys() and is_submission(search_txt):
             tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'submission', is_submission, search_txt, tags_precede_dates, dates_precede_tags)
-         elif 'notification' not in dates.keys() and is_notification(search_txt):
+         if 'notification' not in dates.keys() and is_notification(search_txt):
             tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'notification', is_notification, search_txt, tags_precede_dates, dates_precede_tags)
-         elif 'conference' not in dates.keys() and is_conference(search_txt):
+         if 'conference' not in dates.keys() and is_conference(search_txt):
             tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'conference', is_conference, search_txt, tags_precede_dates, dates_precede_tags)
    sort_dates(dates)
    return dates
@@ -128,26 +129,25 @@ def get_zero(a):
 
 
 def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates_precede_tags):
-   clean_date = clean_months(ent.text.replace('=', '').replace(':', ''))
-   if clean_date:
+   try:
+      clean_date = clean_months(ent.text.replace('=', '').replace(':', ''))
+      parsed_date = parse(clean_date)
+   except:
       try:
-        parsed_date = parse(clean_date)
+         parsed_date = (datetime.datetime(*(time.strptime(ent.text, '%Y-%m-%d')[:3])), None)
       except:
-         try:
-            parsed_date = (datetime.datetime(*(time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'))[:3]), None)
-         except:
-            return tags_precede_dates, dates_precede_tags
-      dates[key] = parsed_date
-      if not dates_precede_tags and not tags_precede_dates:
-         if search_text.find(ent.text.lower()) > f(search_text):
-            tags_precede_dates = True
-         else:
-            dates_precede_tags = True
+         return tags_precede_dates, dates_precede_tags
+   dates[key] = parsed_date
+   if not dates_precede_tags and not tags_precede_dates:
+      if search_text.find(ent.text.lower()) > f(search_text):
+         tags_precede_dates = True
+      else:
+         dates_precede_tags = True
    return tags_precede_dates, dates_precede_tags
 
 
 def is_submission(txt):
-   if txt.find('submi') != -1:
+   if txt.find('subm') != -1:
       return txt.find('submi')
    elif txt.find('abstract') != -1:
       return txt.find('abstract')
@@ -244,11 +244,11 @@ def persist_event(extracted_event_document):
 
 def concat_cfp_event(cfp_event):
     output = ""
-    for key in cfp_event.values():
+    for key in cfp_event.keys():
        if key in ['submission_date', 'conference_date', 'notification_date']:
           output += key + ' ' + cfp_event[key] + '\n'
        else:
-          output += text + '\n'
+          output += cfp_event[key] + '\n'
     return output
 
 
