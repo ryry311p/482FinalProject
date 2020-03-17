@@ -92,12 +92,12 @@ def extract_dates(blurb):
          last_index = index
          index = blurb.find(ent.text, last_index)
 
-         if tags_precede_dates:
+         '''if tags_precede_dates:
             search_txt = blurb[index - SEARCH_RANGE:index].lower()
          elif dates_precede_tags:
             search_txt = blurb[index:index + len(ent.text) + SEARCH_RANGE].lower()
-         else:
-            search_txt = blurb[index - SEARCH_RANGE:index + len(ent.text) + SEARCH_RANGE].lower()
+         else:'''
+         search_txt = blurb[index - SEARCH_RANGE:index + len(ent.text) + SEARCH_RANGE].lower()
 
          if 'submission' not in dates.keys() and is_submission(search_txt):
             tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'submission', is_submission, search_txt, tags_precede_dates, dates_precede_tags)

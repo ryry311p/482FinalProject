@@ -19,8 +19,8 @@ num_possible_dates = 0
 num_correct = 0
 num_correct_name_email = 0
 num_labeled_emails = len(emails)
-'''for email in emails:
-    print(email.keys())
+for email in emails:
+    #print(email.keys())
     # Name Evaluation
     if 'name' in email.keys() and email['name'] != 'N/A' and email['location'] != 'N/A' \
         and email['submission_date'] != 'N/A':
@@ -73,7 +73,7 @@ num_labeled_emails = len(emails)
 
 print("Email name accuracy: {}".format(num_correct_name_email / num_labeled_emails))
 print("Email date accuracy: {}".format(num_correct_dates / num_possible_dates))
-print("Email location accuracy: {}".format(num_correct / num_labeled_emails))'''
+print("Email location accuracy: {}".format(num_correct / num_labeled_emails))
 
 
 # CFP Extraction Evaluation
