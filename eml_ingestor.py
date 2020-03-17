@@ -5,21 +5,22 @@ from nltk.tag import StanfordNERTagger
 from email import parser
 import nltk
 
-def main():
+def get_emails():
    msgs = get_msgs_as_strings()
    clean_msgs(msgs)
+   return msgs
 
-   st = StanfordNERTagger('english.muc.7class.distsim.crf.ser.gz', '/Users/RyanPowell/Downloads/stanford-ner-2018-10-16/stanford-ner.jar')
-   print(st.tag(msgs[0].split()))
+   #st = StanfordNERTagger('english.muc.7class.distsim.crf.ser.gz', '/Users/RyanPowell/Downloads/stanford-ner-2018-10-16/stanford-ner.jar')
+   #print(st.tag(msgs[0].split()))
 
    # print example email body
    # random.shuffle(msgs)
-   first = msgs[0]
+   '''first = msgs[0]
    first_lines = first.split('\n')
    for line in first_lines:
       tokens = nltk.word_tokenize(line)
       tags = nltk.pos_tag(tokens)
-      print(tags)
+      print(tags)'''
 
 def clean_msgs(msgs):
    for i in range(len(msgs)):
