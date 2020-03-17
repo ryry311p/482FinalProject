@@ -1,7 +1,8 @@
 import sys
 import nltk
 import json
-from extractor import extract_location, concat_cfp_event
+from daterangeparser import parse
+from extractor import extract_location, concat_cfp_event, extract_dates
 
 verbose = False
 if len(sys.argv) > 1 and sys.argv[1] == '-v':
@@ -11,11 +12,30 @@ if len(sys.argv) > 1 and sys.argv[1] == '-v':
 with open('labeled_emails.json') as f:
     emails = json.load(f)
 
+num_correct_dates = 0
+num_possible_dates = 0
 num_correct = 0
 for email in emails:
     # Name Evaluation
 
     # Dates Evaluation
+    prediction = extract_dates(email['description'])
+    labels = {}
+    if 'submission_date' in email.keys():
+       labels['submission'] = parse(email['submission_date'])
+       num_possible_dates += 1
+    if 'conference_date' in email.keys():
+       labels['conference'] = parse(email['conference_date'])
+       num_possible_dates += 1
+    if 'notification_date' in email.keys():
+       labels['notification'] = parse(email['notification_date'])
+       num_possible_dates += 1
+    if verbose:
+       print("Prediction: {}\tLabel: {}".format(prediction, labels))
+    for key in labels.keys():
+       target = labels[key]
+       if key in prediction.keys() and target[0] == prediction[key][0] and target[1] == prediction[key][1]:
+          num_correct_dates += 1
 
     # Location Evaluation
     prediction = extract_location(email['description'])
@@ -28,6 +48,7 @@ for email in emails:
     if correct:
         num_correct += 1
 
+print("Email date accuracy: {}".format(num_correct_dates / num_possible_dates))
 print("Email location accuracy: {}".format(num_correct / len(emails)))
 
 

@@ -77,25 +77,9 @@ def extract_event_name(event_blurb):
         return 0
 
 
-def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates_precede_tags):
-   clean_date = clean_months(ent.text.replace('=', '').replace(':', ''))
-   if clean_date:
-      try:
-        parsed_date = parse(clean_date)
-      except:
-          return tags_precede_dates, dates_precede_tags
-      dates[key] = parsed_date
-      if not dates_precede_tags and not tags_precede_dates:
-         if search_text.find(ent.text.lower()) > f(search_text):
-            tags_precede_dates = True
-         else:
-            dates_precede_tags = True
-   return tags_precede_dates, dates_precede_tags
-
-
 def extract_dates(blurb):
    # higher search range means more hits, but higher likelihood of false positive
-   SEARCH_RANGE = 60
+   SEARCH_RANGE = 50
    tagged = nlp(blurb)
    dates = {}
    index = 0
@@ -119,7 +103,43 @@ def extract_dates(blurb):
             tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'notification', is_notification, search_txt, tags_precede_dates, dates_precede_tags)
          elif 'conference' not in dates.keys() and is_conference(search_txt):
             tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'conference', is_conference, search_txt, tags_precede_dates, dates_precede_tags)
+   sort_dates(dates)
    return dates
+
+
+def sort_dates(date_map):
+   dates = [date for date in date_map.values()]
+   dates.sort(key=get_zero)
+
+   i = 0
+   if 'submission' in date_map.keys():
+      date_map['submission'] = dates[i]
+      i += 1
+   if 'notification' in date_map.keys():
+      date_map['notification'] = dates[i]
+      i += 1
+   if 'conference' in date_map.keys():
+      date_map['conference'] = dates[i]
+
+
+def get_zero(a):
+   return a[0]
+
+
+def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates_precede_tags):
+   clean_date = clean_months(ent.text.replace('=', '').replace(':', ''))
+   if clean_date:
+      try:
+        parsed_date = parse(clean_date)
+      except:
+          return tags_precede_dates, dates_precede_tags
+      dates[key] = parsed_date
+      if not dates_precede_tags and not tags_precede_dates:
+         if search_text.find(ent.text.lower()) > f(search_text):
+            tags_precede_dates = True
+         else:
+            dates_precede_tags = True
+   return tags_precede_dates, dates_precede_tags
 
 
 def is_submission(txt):
