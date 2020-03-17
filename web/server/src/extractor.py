@@ -1,10 +1,11 @@
 import json
-import random
-
 import nltk
-import en_core_web_sm
-from eml_ingestor import get_msgs_as_strings, clean_msgs
 from spacy import displacy
+import en_core_web_sm
+from mongoengine import connect, DoesNotExist
+from daterangeparser import parse
+from eml_ingestor import get_emails
+from event_model import EventDocument
 nlp = en_core_web_sm.load()
 
 
@@ -16,11 +17,12 @@ def extract_location(text):
     for idx in range(len(locs)):
         text = locs[idx][0]
         label = locs[idx][1]
-        if label == 'GPE' and ':' not in text:
+        if label == 'GPE' and ':' not in text and text[0].isupper() and "TLS" not in text:
             output += text
             if idx + 1 < len(locs) and locs[idx + 1][1] == 'GPE':
                 output += ', ' + locs[idx + 1][0]
             return output
+
 
 def extract_event_name(event_blurb):
     try:
@@ -74,10 +76,14 @@ def extract_event_name(event_blurb):
     except:
         return 0
 
+
 def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates_precede_tags):
    clean_date = clean_months(ent.text.replace('=', '').replace(':', ''))
    if clean_date:
-      parsed_date = parse(clean_date)
+      try:
+        parsed_date = parse(clean_date)
+      except:
+          return tags_precede_dates, dates_precede_tags
       dates[key] = parsed_date
       if not dates_precede_tags and not tags_precede_dates:
          if search_text.find(ent.text.lower()) > f(search_text):
@@ -85,6 +91,7 @@ def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates
          else:
             dates_precede_tags = True
    return tags_precede_dates, dates_precede_tags
+
 
 def extract_dates(blurb):
    # higher search range means more hits, but higher likelihood of false positive
@@ -114,17 +121,20 @@ def extract_dates(blurb):
             tags_precede_dates, dates_precede_tags = add_date_if_clean(dates, ent, 'conference', is_conference, search_txt, tags_precede_dates, dates_precede_tags)
    return dates
 
+
 def is_submission(txt):
    if txt.find('submi') != -1:
       return txt.find('submi')
    else:
       return False
 
+
 def is_notification(txt):
    if txt.find('notification') != -1:
       return txt.find('notification')
    else:
       return False
+
 
 def is_conference(txt):
    if txt.find('conference') != -1:
@@ -133,6 +143,7 @@ def is_conference(txt):
       return txt.find('symposium')
    else:
       return False
+
 
 def clean_months(txt):
    months = {'jan': 'January', 'feb': 'February', 'mar': 'March', 'apr': 'April', 'may': 'May', 'jun': 'June', 'jul': 'July', 'aug': 'August', 'sep': 'September', 'oct': 'October', 'nov': 'November', 'dec': 'December'}
@@ -147,41 +158,83 @@ def clean_months(txt):
    if contains_month:
       return ' '.join(words)
 
-with open('labeled_emails.json') as f:
-    emails = json.load(f)
 
-num_correct = 0
-for email in emails:
-    prediction = extract_location(email['description'])
-    label = email['location']
-    print("Prediction: {}\tLabel: {}".format(prediction, label))
-    prediction_tokens = set(nltk.word_tokenize(prediction))
-    label_tokens = set(nltk.word_tokenize(label))
-    correct = len(prediction_tokens.intersection(label_tokens)) > 0
-    if correct:
-        num_correct += 1
-print("Email accuracy: {}".format(num_correct / len(emails)))
+def format_date(date):
+    output = date[0].strftime("%m/%d/%Y")
+    if date[1]:
+        output += " - " + date[1].strftime("%m/%d/%Y")
+    return output
 
-with open('cfp_events.json') as f:
-    cfp_events = json.load(f)
+def extract_event(event_text, is_cfp=False):
+    # print("Extracting: {}".format(event['description']))
+    # name = extract_event_name(event['description'])
+    # dates = extract_dates(event['description'])
+    # location = extract_location(event['description'])
+    name = extract_event_name(event_text)
+    dates = extract_dates(event_text)
+    location = extract_location(event_text)
 
-test_events = [event for event in cfp_events
-               if event['location'] != 'N/A' and
-               event['location'] != 'NA']
-random.shuffle(test_events)
-num_correct = 0
-test_size = len(test_events)
-for event in test_events:
-    prediction = extract_location(event['description'])
-    label = event['location']
-    print("Prediction: {}\tLabel: {}".format(prediction, label))
-    if prediction is not None:
-        prediction_tokens = set(nltk.word_tokenize(prediction))
-        label_tokens = set(nltk.word_tokenize(label))
-        correct = len(prediction_tokens.intersection(label_tokens)) > 0
-        if correct:
-            num_correct += 1
-    else:
-        test_size -= 1
+    print("Name: {}\tDates: {}\tLocation: {}".format(name, dates, location))
+    should_extract = True
+    if 'submission' not in dates or name == 0:
+        should_extract = False
+    # if is_cfp:
+    #     if event['location'] == 'N/A' or event['location'] == 'NA':
+    #         location = ""
 
-print("CFP accuracy: {}".format(num_correct / test_size))
+    if not should_extract:
+        return None
+
+    return EventDocument(
+        name=name,
+        link="",
+        acronym="",
+        co_located="",
+        submission_date=format_date(dates['submission']),
+        notification_date=format_date(dates['notification']) if 'notification' in dates else "",
+        conference_date=format_date(dates['conference']) if 'conference' in dates else "",
+        location=location if location is not None else "")
+
+
+def persist_event(extracted_event_document):
+    # Get and update event if it already exists
+    try:
+        event_document = EventDocument.objects.get(
+            name=extracted_event_document.name,
+            submission_date=extracted_event_document.submission_date
+        )
+        event_document.link = extracted_event_document.link
+        event_document.acronym = extracted_event_document.acronym
+        event_document.co_located = extracted_event_document.co_located
+        event_document.location = extracted_event_document.location
+        event_document.conference_date = extracted_event_document.conference_date
+        event_document.notification_date = extracted_event_document.notification_date
+        event_document.save()
+    except DoesNotExist:
+        extracted_event_document.save()
+
+
+def concat_cfp_event(cfp_event):
+    output = ""
+    for text in cfp_event.values():
+        output += text + '\n'
+    return output
+
+
+if __name__ == '__main__':
+    connect('events')
+
+    emails = get_emails()
+    with open('cfp_events.json') as f:
+        cfp_events = json.load(f)
+
+    for email in emails:
+        event_document = extract_event(email)
+        # print("Extracted: {}".format(event_document))
+        if event_document is not None:
+            persist_event(event_document)
+
+    for cfp_event in cfp_events:
+        event_document = extract_event(concat_cfp_event(cfp_event), is_cfp=True)
+        if event_document is not None:
+            persist_event(event_document)
