@@ -19,10 +19,11 @@ num_correct = 0
 num_correct_name_email = 0
 num_labeled_emails = len(emails)
 for email in emails:
+    print(email.keys())
     # Name Evaluation
-
-    if 'name' in email.keys():
-      name_prediction = extract_event_name(concat_cfp_event(email))
+    if 'name' in email.keys() and email['name'] != 'N/A' and email['location'] != 'N/A' \
+        and email['submission_date'] != 'N/A':
+      name_prediction = extract_event_name(email['description'])
       name_label = email['name']
 
       if verbose:
@@ -31,7 +32,7 @@ for email in emails:
       if name_prediction is not None:
          prediction_tokens = set(nltk.word_tokenize(str(name_prediction)))
          label_tokens = set(nltk.word_tokenize(name_label))
-         correct = len(prediction_tokens.intersection(label_tokens)) > 0
+         correct = len(prediction_tokens.intersection(label_tokens)) > 3
          if correct:
                num_correct_name_email += 1
     else:
@@ -58,7 +59,7 @@ for email in emails:
           num_correct_dates += 1
 
     # Location Evaluation
-    if 'location' in email.keys():
+    if 'location' in email.keys() and email['location'] != 'N/A':
       prediction = extract_location(email['description'])
       label = email['location']
       if verbose:
@@ -69,6 +70,7 @@ for email in emails:
       if correct:
          num_correct += 1
 
+print("Email name accuracy: {}".format(num_correct_name_email / num_labeled_emails))
 print("Email date accuracy: {}".format(num_correct_dates / num_possible_dates))
 print("Email location accuracy: {}".format(num_correct / num_labeled_emails))
 
