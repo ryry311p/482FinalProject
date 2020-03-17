@@ -43,13 +43,13 @@ for email in emails:
     prediction = extract_dates(email['description'])
     labels = {}
     if 'submission_date' in email.keys() and email['submission_date'] != 'N/A':
-       labels['submission'] = (parse(email['submission_date']), None)
+       labels['submission'] = parse(email['submission_date'])
        num_possible_dates += 1
     if 'conference_date' in email.keys() and email['conference_date'] != 'N/A':
-       labels['conference'] = (parse(email['conference_date']), None)
+       labels['conference'] = parse(email['conference_date'])
        num_possible_dates += 1
     if 'notification_date' in email.keys() and email['notification_date'] != 'N/A':
-       labels['notification'] = (parse(email['notification_date']), None)
+       labels['notification'] = parse(email['notification_date'])
        num_possible_dates += 1
     if verbose:
        print("Prediction: {}\tLabel: {}".format(prediction, labels))
@@ -109,15 +109,15 @@ for event in cfp_events:
     labels = {}
     if 'submission_date' in event.keys() and event['submission_date'] != 'N/A':
       submission = event['submission_date']
-      labels['submission'] = time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d')
+      labels['submission'] = (time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'), None)
       num_possible_dates += 1
     if 'notification_date' in event.keys() and event['notification_date'] != 'N/A':
       submission = event['notification_date']
-      labels['notification'] = time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d')
+      labels['notification'] = (time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'), None)
       num_possible_dates += 1
     if 'conference_date' in event.keys() and event['conference_date'] != 'N/A':
       submission = event['conference_date']
-      labels['conference'] = time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d')
+      labels['conference'] = (time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'), None)
       num_possible_dates += 1
     if verbose:
       print("Prediction: {}\tLabel: {}".format(prediction, labels))
