@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, Table } from 'antd';
 
 function Event() {
@@ -23,57 +23,53 @@ function Event() {
     },
     {
       title: 'Submission Date',
-      dataIndex: 'submissionDate',
-      key: 'submissionDate',
-      sorter: (a, b) => Date.parse(a.submissionDate) - Date.parse(b.submissionDate),
+      dataIndex: 'submission_date',
+      key: 'submission_date',
+      sorter: (a, b) => Date.parse(a.submission_date) - Date.parse(b.submission_date),
     },
     {
       title: 'Notification Date',
-      dataIndex: 'notificationDate',
-      key: 'notificationDate',
+      dataIndex: 'notification_date',
+      key: 'notification_date',
     },
     {
       title: 'Conference Date',
-      dataIndex: 'conferenceDate',
-      key: 'conferenceDate',
-      sorter: (a, b) => Date.parse(a.conferenceDate.split(' - ')[0]) - Date.parse(b.conferenceDate.split(' - ')[0]),
+      dataIndex: 'conference_date',
+      key: 'conference_date',
+      sorter: (a, b) => Date.parse(a.conference_date.split(' - ')[0]) - Date.parse(b.conference_date.split(' - ')[0]),
     },
   ];
 
-  const data = [
-    {
-      key: '1',
-      name: 'VISAWUS 2020: Victorian Transitions',
-      theme: 'Victorian Interdisciplinary Studies',
-      location: 'Reno, NV',
-      submissionDate: '4/20/2020',
-      notificationDate: '',
-      conferenceDate: '10/15/20 - 10/17/20',
-    },
-    {
-      key: '2',
-      name: 'Food Futures: Humanities and Social Sciences Approaches',
-      theme: 'Humanities for the Environment',
-      location: 'National Sun Yat-sen University Kaohsiung, Taiwan',
-      submissionDate: '3/15/2020',
-      notificationDate: '',
-      conferenceDate: '11/13/20 - 11/14/20',
-    },
-    {
-      key: '3',
-      name: 'International Symposium on SOCIAL NETWORK ANALYSIS, SOCIAL MEDIA, & MINING',
-      theme: 'Social Network Analysis, Social Media, and Mining',
-      location: 'Las Vegas, Nevada',
-      submissionDate: '10/21/2019',
-      notificationDate: '10/28/2019',
-      conferenceDate: '12/5/19 - 12/7/19',
-    },
-  ];
+  const [state, setState] = useState({
+    isFetched: false,
+    events: [],
+  });
+  if (!state.isFetched) {
+    fetch('http://127.0.0.1:5000/api/get_events')
+        .then((response) => {
+          let num = 0;
+          return response.json().then((data) => {
+            const newEvents = [];
+            const receivedEvents = JSON.parse(data['events']);
+            receivedEvents.forEach((event) => {
+              newEvents.push({
+                key: num,
+                ...event,
+              });
+              num += 1;
+            });
+            setState({
+              isFetched: true,
+              events: newEvents,
+            });
+          });
+        });
+  }
 
   return (
       <div>
         <Card title="All Conferences">
-          <Table columns={columns} dataSource={data} />
+          <Table columns={columns} dataSource={state.events} />
         </Card>
       </div>
   );
