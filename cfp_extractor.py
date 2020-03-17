@@ -124,7 +124,7 @@ print(cfp_json[0]['title'])
 print(cfp_json[0]['submission_date'])
 
 cfp_json_obj = json.dumps(cfp_json)
-with open("cfp_events.json", "w") as outfile: 
+with open("web/server/src/cfp_events.json", "w") as outfile:
     outfile.write(cfp_json_obj)
 
 """# Named Entity Recognition"""
