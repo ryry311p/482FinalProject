@@ -86,7 +86,7 @@ def extract_dates(blurb):
    tags_precede_dates = False
    dates_precede_tags = False
    for ent in tagged.ents:
-      if ent.label_ == 'DATE' and '20' in ent.text and len(ent.text.split()) > 1:
+      if (ent.label_ == 'DATE' or ent.label_ == 'CARDINAL') and '20' in ent.text and len(ent.text.split()) > 1:
          last_index = index
          index = blurb.find(ent.text, last_index)
 
@@ -145,6 +145,8 @@ def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates
 def is_submission(txt):
    if txt.find('submi') != -1:
       return txt.find('submi')
+   elif txt.find('abstract') != -1:
+      return txt.find('abstract')
    else:
       return False
 
@@ -161,6 +163,8 @@ def is_conference(txt):
       return txt.find('conference')
    elif txt.find('symposium') != -1:
       return txt.find('symposium')
+   elif txt.find('event') != -1:
+      return txt.find('event')
    else:
       return False
 

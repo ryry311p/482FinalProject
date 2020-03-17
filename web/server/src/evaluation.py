@@ -2,6 +2,7 @@ import sys
 import nltk
 import json
 import time
+import datetime
 from daterangeparser import parse
 from extractor import extract_location, concat_cfp_event, extract_dates, extract_event_name
 
@@ -18,7 +19,7 @@ num_possible_dates = 0
 num_correct = 0
 num_correct_name_email = 0
 num_labeled_emails = len(emails)
-for email in emails:
+'''for email in emails:
     print(email.keys())
     # Name Evaluation
     if 'name' in email.keys() and email['name'] != 'N/A' and email['location'] != 'N/A' \
@@ -72,7 +73,7 @@ for email in emails:
 
 print("Email name accuracy: {}".format(num_correct_name_email / num_labeled_emails))
 print("Email date accuracy: {}".format(num_correct_dates / num_possible_dates))
-print("Email location accuracy: {}".format(num_correct / num_labeled_emails))
+print("Email location accuracy: {}".format(num_correct / num_labeled_emails))'''
 
 
 # CFP Extraction Evaluation
@@ -105,19 +106,19 @@ for event in cfp_events:
         if correct:
             num_correct_name += 1
     # Dates Evaluation
-    prediction = extract_dates(event['description'])
+    prediction = extract_dates(concat_cfp_event(event))
     labels = {}
     if 'submission_date' in event.keys() and event['submission_date'] != 'N/A':
       submission = event['submission_date']
-      labels['submission'] = (time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'), None)
+      labels['submission'] = (datetime.datetime(*(time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'))[:3]), None)
       num_possible_dates += 1
     if 'notification_date' in event.keys() and event['notification_date'] != 'N/A':
       submission = event['notification_date']
-      labels['notification'] = (time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'), None)
+      labels['notification'] = (datetime.datetime(*(time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'))[:3]), None)
       num_possible_dates += 1
     if 'conference_date' in event.keys() and event['conference_date'] != 'N/A':
       submission = event['conference_date']
-      labels['conference'] = (time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'), None)
+      labels['conference'] = (datetime.datetime(*(time.strptime(submission[submission.find(':') + 2:submission.find(':') + 12], '%Y-%m-%d'))[:3]), None)
       num_possible_dates += 1
     if verbose:
       print("Prediction: {}\tLabel: {}".format(prediction, labels))
