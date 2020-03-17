@@ -1,12 +1,8 @@
 import sys
 import nltk
 import json
-<<<<<<< HEAD
 from daterangeparser import parse
-from extractor import extract_location, concat_cfp_event, extract_dates
-=======
-from extractor import extract_location, concat_cfp_event, extract_event_name
->>>>>>> 921369a75849ad48474a2bf9b77b1e46f3a3945f
+from extractor import extract_location, concat_cfp_event, extract_dates, extract_event_name
 
 verbose = False
 if len(sys.argv) > 1 and sys.argv[1] == '-v':
@@ -19,35 +15,38 @@ with open('labeled_emails.json') as f:
 num_correct_dates = 0
 num_possible_dates = 0
 num_correct = 0
-
 num_correct_name_email = 0
+num_labeled_emails = len(emails)
 for email in emails:
     # Name Evaluation
 
-    name_prediction = extract_event_name(concat_cfp_event(email))
-    name_label = email['name']
+    if 'name' in email.keys():
+      name_prediction = extract_event_name(concat_cfp_event(email))
+      name_label = email['name']
 
-    if verbose:
-        print("Name Prediction: {}\t Name Label: {}".format(name_prediction, name_label))
-        print()
-    if name_prediction is not None:
-        prediction_tokens = set(nltk.word_tokenize(str(name_prediction)))
-        label_tokens = set(nltk.word_tokenize(name_label))
-        correct = len(prediction_tokens.intersection(label_tokens)) > 0
-        if correct:
-            num_correct_name_email += 1
+      if verbose:
+         print("Name Prediction: {}\t Name Label: {}".format(name_prediction, name_label))
+         print()
+      if name_prediction is not None:
+         prediction_tokens = set(nltk.word_tokenize(str(name_prediction)))
+         label_tokens = set(nltk.word_tokenize(name_label))
+         correct = len(prediction_tokens.intersection(label_tokens)) > 0
+         if correct:
+               num_correct_name_email += 1
+    else:
+       num_labeled_emails -= 1
 
 
     # Dates Evaluation
     prediction = extract_dates(email['description'])
     labels = {}
-    if 'submission_date' in email.keys():
+    if 'submission_date' in email.keys() and email['submission_date'] != 'N/A':
        labels['submission'] = parse(email['submission_date'])
        num_possible_dates += 1
-    if 'conference_date' in email.keys():
+    if 'conference_date' in email.keys() and email['conference_date'] != 'N/A':
        labels['conference'] = parse(email['conference_date'])
        num_possible_dates += 1
-    if 'notification_date' in email.keys():
+    if 'notification_date' in email.keys() and email['notification_date'] != 'N/A':
        labels['notification'] = parse(email['notification_date'])
        num_possible_dates += 1
     if verbose:
@@ -58,18 +57,19 @@ for email in emails:
           num_correct_dates += 1
 
     # Location Evaluation
-    prediction = extract_location(email['description'])
-    label = email['location']
-    if verbose:
-        print("Prediction: {}\tLabel: {}".format(prediction, label))
-    prediction_tokens = set(nltk.word_tokenize(prediction))
-    label_tokens = set(nltk.word_tokenize(label))
-    correct = len(prediction_tokens.intersection(label_tokens)) > 0
-    if correct:
-        num_correct += 1
+    if 'location' in email.keys():
+      prediction = extract_location(email['description'])
+      label = email['location']
+      if verbose:
+         print("Prediction: {}\tLabel: {}".format(prediction, label))
+      prediction_tokens = set(nltk.word_tokenize(prediction))
+      label_tokens = set(nltk.word_tokenize(label))
+      correct = len(prediction_tokens.intersection(label_tokens)) > 0
+      if correct:
+         num_correct += 1
 
 print("Email date accuracy: {}".format(num_correct_dates / num_possible_dates))
-print("Email location accuracy: {}".format(num_correct / len(emails)))
+print("Email location accuracy: {}".format(num_correct / num_labeled_emails))
 
 
 # CFP Extraction Evaluation
