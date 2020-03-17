@@ -23,50 +23,56 @@ def extract_location(text):
             return output
 
 def extract_event_name(event_blurb):
-    test_title = event_blurb.split("\n")[0]
+    try:
+        test_title = event_blurb.split("\n")[0]
+        # print(test_title)
 
-    tagged = nlp(event_blurb)
+        tagged = nlp(event_blurb)
 
-    labels = set([x.label_ for x in tagged.ents])
+        labels = list(set([x.label_ for x in tagged.ents]))
 
-    # cfp_data[0] if unique_org in title
-    org_objs = [X.text for X in tagged.ents if X.label_ == "ORG"]
-    unique_org = set(org_objs)
+        # cfp_data[0] if unique_org in title
+        org_objs = [X.text for X in tagged.ents if X.label_ == "ORG"]
+        unique_org = set(org_objs)
 
-    person_objs = [X.text for X in tagged.ents if X.label_ == "PERSON"]
-    unique_person = set(person_objs)
+        person_objs = [X.text for X in tagged.ents if X.label_ == "PERSON"]
+        unique_person = set(person_objs)
 
-    event_objs = [X.text for X in tagged.ents if X.label_ == "EVENT"]
-    # print(event_objs)
-    unique_event = list(set(event_objs))
-    # print(unique_event)
+        event_objs = [X.text for X in tagged.ents if X.label_ == "EVENT"]
+        # print(event_objs)
+        unique_event = list(set(event_objs))
+        # print(unique_event)
 
-    if len(event_objs) == 1:
-        return event_objs[0]
+        if len(event_objs) == 1:
+            event = event_objs[0]
+            return " ".join(event.split())
 
-    elif len(unique_event) > 1:
-        return max(unique_event, key=len).strip().replace("\n", "")
+        elif len(unique_event) > 1:
+            event = max(unique_event, key=len).strip().replace("\n", "")
+            return " ".join(event.split())
 
-    elif (tagged.ents[0].text in test_title and
-          tagged.ents[0].label_ == "ORG"):  # First entity extracted from NRE is part of title
-        return test_title
+        elif (tagged.ents[0].text in test_title and
+              tagged.ents[0].label_ == "ORG"):  # First entity extracted from NRE is part of title
+            return test_title
 
+        elif ("WORK_OF_ART" in labels):
+            for x in tagged.ents:
+                if (x.label_ == "WORK_OF_ART" and x.text in test_title):
+                    return test_title
+        elif (len(unique_person) > 0):
+            for person in unique_person:
+                if person in test_title:
+                    return test_title
 
-    elif ("WORK_OF_ART" in labels):
-        for x in tagged.ents:
-            if (x.label_ == "WORK_OF_ART" and x.text in test_title):
-                return test_title
-    elif (len(unique_person) > 0):
-        for person in unique_person:
-            if person in test_title:
-                return test_title
+        elif (len(tagged.ents) > 0):
+            for entity in tagged.ents:
+                if (entity.text.lower() in test_title.lower()):
+                    return test_title
 
-    elif (len(tagged.ents) > 0):
-        for entity in tagged.ents:
-            if (entity.text.lower() in test_title.lower()):
-                return test_title
+        return 0
 
-    return 0
+    except:
+        return 0
 
 def add_date_if_clean(dates, ent, key, f, search_text, tags_precede_dates, dates_precede_tags):
    clean_date = clean_months(ent.text.replace('=', '').replace(':', ''))
