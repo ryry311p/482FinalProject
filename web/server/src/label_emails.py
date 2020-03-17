@@ -1,40 +1,20 @@
 import json
-import time
-import random
-from eml_ingestor import get_msgs_as_strings, clean_msgs
 
 
-msgs = get_msgs_as_strings()
-clean_msgs(msgs)
-random.shuffle(msgs)
+with open('labeled_emails.json') as f:
+    emails = json.load(f)
 
-emails = []
+for i in range(len(emails)):
+    # Skip if labeled
+    if 'name' in emails[i]:
+        continue
 
-cur = 0
-while len(emails) < 20:
-    email = {'description': msgs[cur]}
-    print(msgs[cur])
-    should_label = input('Label me? (y/n): ')
-    if should_label == 'y':
-        email['name'] = input('Gimme da name: ')
-        if email['name'] == 'next':
-            continue
-        email['location'] = input('Gimme da location: ')
-        if email['location'] == 'next':
-            continue
-        email['submission_date'] = input('Gimme da submission date: ')
-        if email['submission_date'] == 'next':
-            continue
-        email['notification_date'] = input('Gimme da notification date: ')
-        if email['notification_date'] == 'next':
-            continue
-        email['conference_date'] = input('Gimme da conference date: ')
-        if email['conference_date'] == 'next':
-            continue
-        emails.append(email)
-        cur_time = time.time()
-        with open('labeled_emails.json' + str(cur_time), 'w') as f:
-            json.dump(emails, f)
-        print('Gotcha bitch!')
-    cur += 1
-
+    print(emails[i]['description'])
+    print("On email #{} out of 60".format(i))
+    emails[i]['name'] = input('Gimme da name: ')
+    emails[i]['location'] = input('Gimme da location: ')
+    emails[i]['submission_date'] = input('Gimme da submission date: ')
+    emails[i]['notification_date'] = input('Gimme da notification date: ')
+    emails[i]['conference_date'] = input('Gimme da conference date: ')
+    with open('labeled_emails.json', 'w') as f:
+        json.dump(emails, f)
